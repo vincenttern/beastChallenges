@@ -1,0 +1,111 @@
+<script src="./simpleTest.js"></script>
+<script>
+
+(function() {
+
+    // Store libraries
+    var libraryStorage = {};
+
+    function librarySystem(libraryName, dependencies, callback) {
+
+        if (arguments.length > 1) {
+
+            // Set properties to libraryStorage[libraryName].
+            libraryStorage[libraryName] = {
+                libraryDependencies: dependencies,
+                callback: callback
+            } 
+
+            // Set the return value in the callback.
+            if (dependencies.length < 1) {
+                libraryStorage[libraryName].nameOfThisLibrary = callback();
+
+            // Set the library dependencies of this libraryName if its dependencies.length > 1.
+            } else {
+                libraryStorage[libraryName].libraryDependencies = libraryStorage[libraryName].libraryDependencies.map(function (library) {
+                    return libraryStorage[library].nameOfThisLibrary;
+                })
+            }
+
+        } else {
+            return helperFunction(libraryName);
+        }
+    }
+
+    function helperFunction(libraryName) {
+        
+        // If this libraryName have zero dependencies, return only the value inside this callback.
+        if (libraryStorage[libraryName].libraryDependencies.length < 1) {
+            return libraryStorage[libraryName].nameOfThisLibrary;
+
+        // Return this libraryDependencies values with this libraryName return value. 
+        } else {
+            var thisLibraryDependencies = libraryStorage[libraryName].libraryDependencies;
+            return libraryStorage[libraryName].callback.apply(this, thisLibraryDependencies);
+        }
+
+    }
+    
+    // Access function globally. 
+    window.librarySystem = librarySystem;
+
+})();
+
+tests({
+    'It should return the value of the only provided library name.': function() {
+        librarySystem('name', [], function() {
+            return 'Gordon';
+        });
+
+        eq(librarySystem('name'), 'Gordon');
+    },
+    'It should work when running one library.': function() {
+        librarySystem('name', [], function() {
+            return 'Gordon';
+        });
+
+        librarySystem('company', ['name'], function(name) {
+            return name + ' Watch and Code';
+        });
+
+        eq(librarySystem('company'), 'Gordon Watch and Code')
+    },
+    'It should work when running multiple libraries in order.': function() {
+        librarySystem('name', [], function() {
+            return 'Gordon';
+        });
+
+        librarySystem('company', [], function() {
+            return 'Watch and Code';
+        });
+
+        librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+            return name + ' works at ' + company;
+        });
+
+        eq(librarySystem('workBlurb'), 'Gordon works at Watch and Code');
+    },
+    'It should work when running libraries are out of order.': function() {
+        librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+            return name + ' works at ' + company;
+        });
+
+        librarySystem('name', [], function() {
+            return 'Gordon';
+        });
+
+        librarySystem('company', [], function() {
+            return 'Watch and Code';
+        });
+
+        eq(librarySystem('workBlurb'), 'Gordon works at Watch and Code');
+    },
+    'It should only run the library once.': function() {
+        var count = 0;
+        librarySystem('name', [], function() {
+            count++;
+        });
+        eq(count, 1);
+    }
+});
+</script>
