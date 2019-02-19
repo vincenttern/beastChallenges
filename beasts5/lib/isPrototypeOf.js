@@ -12,9 +12,11 @@
 
         var checkObj = Object.getPrototypeOf(checkObj);
         if (checkObj !== null) {
+            // Base case.
             if (prototypeObj === checkObj) {
                 return true;
             } else {
+                // Recursive case.
                 return isPrototypeOf(prototypeObj, checkObj);
             }
         }
