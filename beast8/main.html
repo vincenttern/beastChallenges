@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <!--  Meta  -->
+  <meta charset="UTF-8" />
+  <title>My New Pen!</title>
+
+  <!--  Styles  -->
+  <link rel="stylesheet" href="styles/main.css">
+
+</head>
+
+<body>
+
+  <!-- <div>
+      <button onclick="handlers.toggleAll()">Toggle All</button>
+    </div> -->
+  <h2>Organize your todo list by nesting your todos</h2>
+  <div>
+    <p>How to use:</p>
+    <ol>
+      <li>(add a todo), ---------------------- type something in the input and click add.</li>
+      <li>(edit todo), ----------------------- double clicked on a todo and when done typing click enter key.</li>
+      <li>(delete todo), -------------------- click delete button.</li>
+      <li>(add a todo inside a todo), ----- click the add button next to the todo then type something then click the
+        enter key.</li>
+      <li>(completed a todo), ------------- click completed button.
+    </ol>
+  </div>
+
+  <div>
+    <button onclick="handlers.addTodo()">Add</button>
+    <input id="addTodoTextInput" type="text">
+  </div>
+
+  <!-- <div>
+      <button onclick="handlers.toggleCompleted()">Toggle Completed</button>
+      <input id="toggleCompletedPositionInput" type="number">
+    </div> -->
+
+  <!-- <div id="forNestedTodoDiv"></div> -->
+  <ul id="todo-list"></ul>
+
+
+  <!--
+
+    Wow! What do you want to build?
+
+    You have so many possibilities right now... Looking for something to kick off?
+    How about a simple folio page to show off everything you're going to make!
+   
+  -->
+
+  <!-- Scripts -->
+  <script id="todo-template" type="text/x-handlebars-template">
+    {{#this}}
+      <li data-id="{{id}}">
+        <div class="view">
+          <label>{{todoText}}</label>
+          <button class="addNestedTodo">Add</button>
+          <button class="destroy">Delete</button>
+        </div>
+        <input class="edit" value="{{todoText}}">
+
+        <div>
+          <ul>
+            {{#each nestedArray}}
+            <li data-id="{{id}}">
+              <div class="view-nested">
+                  <label>{{todoText}}</label>
+                  <button class="completeNestedTodo">Completed</button>
+                  <button class="destroyNestedTodo">Delete</button>
+              </div>
+              <input type="text" id="addNestedTodoInput" placeholder="add todo..." value="{{todoText}}">
+            </li>
+            {{/each}}
+          </ul>
+        </div>
+
+      </li>
+    {{/this}}
+  </script>
+
+  <script src="handlebars-v4.1.0.js"></script>
+  <script src="scripts/main.js"></script>
+</body>
+
+</html>
