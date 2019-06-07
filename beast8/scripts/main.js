@@ -2,10 +2,15 @@ ENTER_KEY = 13;
 
 var util = {
     uuid: function() {
-        var firstRandomNum = Math.floor(Math.random() * 9) + 1;
-        var secondRandomNum = Math.floor(Math.random() * 9) + 1;
+        var startRandomNum = Math.floor(Math.random() * 9) + 1;
+        var count = 0;
+        var uuid = startRandomNum.toString();
+        for (var i = count; i <= 4; i++) {
+          var nextRandomNum = Math.floor(Math.random() * 9) + 1;
+          uuid += nextRandomNum.toString();
+          count++;
+        }
 
-        var uuid = firstRandomNum.toString() + secondRandomNum.toString();
         return uuid;
     }
 }
@@ -49,9 +54,12 @@ var todoList = {
             var getTodoId = this.todos[i].id;
             if (getTodoId === idNum.toString()) {
                 this.todos.splice(i, 1);
-            } else {
-                var count = 0;
-                this.todos[i].nestedArray.forEach(function (nestedTodo) {
+            } 
+
+            var count = 0;
+            if ('nestedArray' in this.todos[i]) {
+                var nestedArrayExist = this.todos[i].nestedArray;
+                nestedArrayExist.forEach(function (nestedTodo) {
                     if (nestedTodo.id === idNum.toString()) {
                         this.todos[i].nestedArray.splice(count, 1);
                     } else {
@@ -63,21 +71,24 @@ var todoList = {
 
     },
     completedNestedTodo: function (e) {
-        var idNum = e.parentNode.parentNode.dataset.id
+        var idNum = e.parentNode.parentNode.parentNode.parentNode.dataset.id;
         for (var i = 0; i < this.todos.length; i++) {
             var getTodoId = this.todos[i].id;
 
             if (getTodoId === idNum.toString()) {
                 var todoCompleted = this.todos[i].completed;
                 todoCompleted = !todoCompleted;
-            } else {
-                var count = 0;
-                this.todos[i].nestedArray.forEach(function (nestedTodo) {
+            } 
+
+            var count = 0;
+            if ('nestedArray' in this.todos[i]) {
+                var nestedArrayExist = this.todos[i].nestedArray;
+                nestedArrayExist.forEach(function (nestedTodo) {
                     if (nestedTodo.id === idNum.toString()) {
                         var todoCompleted = this.todos[i].nestedArray[count];
                         todoCompleted.completed = !todoCompleted.completed;
-
-                        handlers.checkCompleted(e, nestedTodo);
+    
+                        controllers.checkCompleted(e, nestedTodo);
                     } else {
                         count++;
                     }
@@ -87,10 +98,20 @@ var todoList = {
     }
 };
 
-var handlers = {
+var controllers = {
     addTodo: function () {
         var addTodoTextInput = document.getElementById('addTodoTextInput');
-        todoList.addTodo(addTodoTextInput.value);
+        if (addTodoTextInput.value === "") {
+            M.toast({
+                html: '<h3>Hi! Please write something before clicking add.</h3>', 
+                classes: 'rounded', 
+                displayLength: 4000,
+                
+            });
+        } else {
+            todoList.addTodo(addTodoTextInput.value);
+        }
+    
         addTodoTextInput.value = '';
         view.displayTodos();
     },
@@ -144,10 +165,12 @@ var handlers = {
         var i = todos.length;
 
         while (i--) {
-            var todoListNestedLength = todos[i].nestedArray.length;
-            for (var j = 0; j < todoListNestedLength; j++) {
-                if (todoList.todos[i].nestedArray[j].id === id) {
-                    return i;
+            if ('nestedArray' in todos[i]) {
+                var nestedArrayLength = todos[i].nestedArray.length;
+                for (var j = 0; j < nestedArrayLength; j++) {
+                    if (todos[i].nestedArray[j].id === id) {
+                        return i;
+                    }
                 }
             }
         }
@@ -158,10 +181,13 @@ var handlers = {
         var i = todos.length;
 
         while (i--) {
-            var todoListNestedLength = todos[i].nestedArray.length;
-            for (var j = 0; j < todoListNestedLength; j++) {
-                if (todoList.todos[i].nestedArray[j].id === id) {
-                    return j;
+            if ('nestedArray' in todos[i]) {
+                var nestedArrayExist = todos[i].nestedArray;
+                var nestedArrayLength = todos[i].nestedArray.length;
+                for (var j = 0; j < nestedArrayLength; j++) {
+                    if (todos[i].nestedArray[j].id === id) {
+                        return j;
+                    }
                 }
             }
         }
@@ -192,7 +218,7 @@ var handlers = {
         
     },
     checkCompleted: function (e, nestedTodo) {
-        var checkElementCompleted = e.parentNode.firstElementChild;
+        var checkElementCompleted = e.parentNode.parentNode.firstElementChild.firstElementChild;
         if (nestedTodo.completed === true) {
             if (checkElementCompleted.localName === 'label') {
                 checkElementCompleted.className = 'completed';
@@ -204,19 +230,23 @@ var handlers = {
         }
     },
     checkAllWithCompleted: function () {
-        for (var i = 0; i < todoList.todos.length; i++) {
-            todoList.todos[i].nestedArray.forEach(function (todo) {
-                if (todo.completed === true) {
-                    this.addStrikeToCompleted(todo.id);
-                }
-            }, this);
+        var todos = todoList.todos;
+        for (var i = 0; i < todos.length; i++) {
+            if ('nestedArray' in todos[i]) {
+                var nestedArrayExist = todos[i].nestedArray;
+                nestedArrayExist.forEach(function (todo) {
+                    if (todo.completed === true) {
+                        this.addStrikeToCompleted(todo.id);
+                    }
+                }, this);
+            }
         }
     },
     addStrikeToCompleted: function (todoId) {
         var allLiId = document.querySelectorAll('li');
         for (var i = 0; i < allLiId.length; i++) {
             if (allLiId[i].dataset.id === todoId) {
-                allLiId[i].firstElementChild.firstElementChild.className = 'completed';
+                allLiId[i].firstElementChild.firstElementChild.firstElementChild.firstElementChild.className = 'completed';
             }
         }
     }
@@ -230,7 +260,7 @@ var view = {
         var todos = todoList.todos;
         document.getElementById('todo-list').innerHTML = this.todoTemplate(todos);
 
-        handlers.checkAllWithCompleted();
+        controllers.checkAllWithCompleted();
     },
     displayEachNestedTodo: function(todoIdThatWasClicked) {
         var todosUl = document.getElementById(todoIdThatWasClicked);
@@ -257,6 +287,26 @@ var view = {
             todosUl.appendChild(todoNestedDiv);
         }, this);
     },
+    displayNestedTodo: function (e) {
+        var selectId = e.parentNode;
+
+        // Base case.
+        if (selectId.localName === 'li') {
+            selectId = selectId;
+            
+        // Recursive case.
+        } else {
+            return this.displayNestedTodo(selectId);
+        }
+
+        var createUl = this.createUl();
+        var createLi = this.createLi();
+        var createInput = this.createInput();
+
+        selectId.appendChild(createUl);
+        createUl.appendChild(createLi);
+        createLi.appendChild(createInput);
+    },
     createDeleteButton: function () {
         var deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
@@ -265,7 +315,7 @@ var view = {
     },
     createButton: function () {
         var createNewButton = document.createElement('button');
-        createNewButton.setAttribute('onclick', 'handlers.addNestedTodo()');
+        createNewButton.setAttribute('onclick', 'controllers.addNestedTodo()');
         createNewButton.innerHTML = 'Add';
         return createNewButton;
     },
@@ -288,56 +338,39 @@ var view = {
     createDiv: function () {
         var createNewDiv = document.createElement('div');
         return createNewDiv;
-    },
-    displayNestedTodo: function (e) {
-        var selectId = e.parentNode;
+    }
+};
 
-        // Base case.
-        if (selectId.localName === 'li') {
-            selectId = selectId;
-            
-        // Recursive case.
-        } else {
-            return this.displayNestedTodo(selectId);
-        }
 
-        var createUl = this.createUl();
-        var createLi = this.createLi();
-        var createInput = this.createInput();
-
-        selectId.appendChild(createUl);
-        createUl.appendChild(createLi);
-        createLi.appendChild(createInput);
-
-    },
+var events = {
     setUpEventListeners: function () {
 
         var getTodoList = document.getElementById('todo-list');
 
         // Delete todo when delete button is click.
         getTodoList.addEventListener('click', function(e) {
-            elementClicked = e.target;
-            if (elementClicked.className === 'destroy') {
-                var elementDatasetId = elementClicked.parentNode.parentNode.dataset.id;
-                view.setUpEventListeners.bind(this, handlers.deleteTodo(parseInt(elementDatasetId)));
+            elementClicked = e.target.parentNode;
+            if (elementClicked.id === 'destroy') {
+                var elementDatasetId = elementClicked.parentNode.parentNode.parentNode.parentNode.dataset.id;
+                events.setUpEventListeners.bind(this, controllers.deleteTodo(parseInt(elementDatasetId)));
             }
         });
 
         // Delete nested todo.
         getTodoList.addEventListener('click', function(e) {
-            elementClicked = e.target;
-            if (elementClicked.className === 'destroyNestedTodo') {
-                var elementDatasetId = elementClicked.parentNode.parentNode.dataset.id;
-                view.setUpEventListeners.bind(this, handlers.deleteTodo(parseInt(elementDatasetId)));
+            elementClicked = e.target.parentNode;
+            if (elementClicked.id === 'destroyNestedTodo') {
+                var elementDatasetId = elementClicked.parentNode.parentNode.parentNode.parentNode.dataset.id;
+                events.setUpEventListeners.bind(this, controllers.deleteTodo(parseInt(elementDatasetId)));
             }
         })
 
         // Add nested todo when add is clicked
         getTodoList.addEventListener('click', function(e) {
             // debugger;
-            elementClicked = e.target;
-            if (elementClicked.className === 'addNestedTodo') {
-                view.displayNestedTodo(elementClicked);
+            elementClicked = e.target.parentNode;
+            if (elementClicked.id === 'addNestedTodo') {
+                view.displayNestedTodo(e.target.parentNode);
             }
         });
 
@@ -345,7 +378,7 @@ var view = {
         getTodoList.addEventListener('dblclick', function(e) {
             elementClicked = e.target;
             if (elementClicked.localName === 'label') {
-                view.setUpEventListeners.bind(this, handlers.changeTodo(elementClicked));
+                events.setUpEventListeners.bind(this, controllers.changeTodo(elementClicked));
             }
         });
 
@@ -353,15 +386,15 @@ var view = {
         getTodoList.addEventListener('keyup', function(e) {
             elementClicked = e.target;
             if (elementClicked.className === 'edit') {
-                view.setUpEventListeners.bind(this, handlers.editKeyup(e));
+                events.setUpEventListeners.bind(this, controllers.editKeyup(e));
             }
 
             if (elementClicked.id === 'addNestedTodoInput') {
-                view.setUpEventListeners.bind(this, handlers.editKeyup(e))
+                events.setUpEventListeners.bind(this, controllers.editKeyup(e))
             }
 
             if (elementClicked.id === 'addNestedTodoTextInput') {
-                view.setUpEventListeners.bind(this, handlers.editKeyup(e));
+                events.setUpEventListeners.bind(this, controllers.editKeyup(e));
             }
         });
 
@@ -370,25 +403,25 @@ var view = {
             // debugger;
             elementClicked = e.target;
             if (elementClicked.className === 'edit') {
-                view.setUpEventListeners.bind(this, handlers.update(e));
+                events.setUpEventListeners.bind(this, controllers.update(e));
             }
 
             if (elementClicked.id === 'addNestedTodoInput') {
-                view.setUpEventListeners.bind(this, handlers.updateNested(e));
+                events.setUpEventListeners.bind(this, controllers.updateNested(e));
             }
 
             if (elementClicked.id === 'addNestedTodoTextInput') {
-                view.setUpEventListeners.bind(this, handlers.addNestedTodo(elementClicked));
+                events.setUpEventListeners.bind(this, controllers.addNestedTodo(elementClicked));
             }
         });
 
         getTodoList.addEventListener('click', function(e) {
-            var elementClicked = e.target;
-            if (elementClicked.className === 'completeNestedTodo') {
-                view.setUpEventListeners.bind(this, handlers.completeNestedTodo(elementClicked));
+            var elementClicked = e.target.parentNode;
+            if (elementClicked.id === 'completeNestedTodo') {
+                events.setUpEventListeners.bind(this, controllers.completeNestedTodo(elementClicked));
             }
         });
     }
-};
+}
 
-view.setUpEventListeners();
+events.setUpEventListeners();
